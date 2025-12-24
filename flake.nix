@@ -67,14 +67,6 @@
             cp $GO_MODULES_PATH/go.mod.saved go.mod
             cp $GO_MODULES_PATH/go.sum.saved go.sum
             
-            # Re-create tools.go
-            echo 'package main; import _ "github.com/99designs/gqlgen/graphql"' > tools.go
-
-            # Create dummy generated files so gqlgen can load the package structure if needed
-            mkdir -p generated/gqlmodel generated/gqlschema
-            echo "package gqlmodel" > generated/gqlmodel/dummy.go
-            echo "package gqlschema" > generated/gqlschema/dummy.go
-
             # Generate dummy UI files (Frontend build skipped due to legacy dependency incompatibilities)
             mkdir -p ui/build
             touch ui/build/index.html
