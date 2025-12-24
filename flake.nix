@@ -2,7 +2,7 @@
   description = "Traggo Server";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -106,7 +106,7 @@
             # Generate Go code using gqlgen from nixpkgs
             export GOCACHE=$TMPDIR/go-cache
             # gqlgen runs go mod tidy which might fail due to missing test deps in proxy.
-            gqlgen generate || true
+            gqlgen generate
             
             if [ ! -f generated/gqlmodel/generated.go ]; then
                echo "gqlgen generation failed!"
