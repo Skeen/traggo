@@ -23,7 +23,6 @@
             sha256 = "sha256-RYMxjQtUzYWTtkiF/4C4CogM582BLH7hzl7MbkYML9I=";
           };
 
-
           proxyVendor = true;
           vendorHash = "sha256-tTwuxCwJmvUeaiI7Ku0E1RIsL60/ml3RHaZzbQ5YnDo=";
 
@@ -32,12 +31,6 @@
           # Fix for go mod failing due to missing generated internal packages
           overrideModAttrs = old: {
             preBuild = ''
-              mkdir -p generated/gqlmodel generated/gqlschema
-              echo "package gqlmodel" > generated/gqlmodel/dummy.go
-              echo "package gqlschema" > generated/gqlschema/dummy.go
-              
-              echo 'package main; import _ "github.com/99designs/gqlgen/graphql"' > tools.go
-              
               # Update go.sum for the new dependency and update tools
               export GOMODCACHE=$TMPDIR/go-mod-cache
               go get golang.org/x/tools@latest github.com/99designs/gqlgen@latest
