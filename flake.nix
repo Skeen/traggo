@@ -15,7 +15,14 @@
         packages.default = pkgs.buildGoModule {
           pname = "traggo-server";
           version = "0.0.1";
-          src = ./.;
+
+          src = pkgs.fetchFromGitHub {
+            owner = "traggo";
+            repo = "server";
+            rev = "f57806a449ebb912cb0f96ec9b5a48b1cb03373b";
+            sha256 = "sha256-RYMxjQtUzYWTtkiF/4C4CogM582BLH7hzl7MbkYML9I=";
+          };
+
 
           proxyVendor = true;
           vendorHash = "sha256-tTwuxCwJmvUeaiI7Ku0E1RIsL60/ml3RHaZzbQ5YnDo=";
