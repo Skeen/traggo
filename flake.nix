@@ -10,6 +10,46 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+
+        traggoSource = pkgs.fetchFromGitHub {
+          owner = "traggo";
+          repo = "server";
+          rev = "v0.7.1";
+          sha256 = "0zc95iclvbc9v2yyjl4jmm8amg400704q98y3amzqrx9s9lrf5ag";
+        };
+
+        traggoUi = pkgs.stdenv.mkDerivation {
+          pname = "traggo-ui";
+          version = "0.7.1";
+
+          src = "${traggoSource}/ui";
+
+          yarnOfflineCache = pkgs.fetchYarnDeps {
+            yarnLock = "${traggoSource}/ui/yarn.lock";
+            hash = "sha256-BDQ7MgRWBRQQfjS5UCW3KJ0kJrkn4g9o4mU0ZH+vhX0=";
+          };
+
+          nativeBuildInputs = with pkgs; [
+            yarn
+            nodejs
+            yarnConfigHook
+            yarnBuildHook
+          ];
+
+          env.NODE_OPTIONS = "--openssl-legacy-provider";
+
+          preBuild = ''
+            ln -s ${traggoSource}/schema.graphql ../schema.graphql
+            yarn --offline generate
+          '';
+
+          installPhase = ''
+            runHook preInstall
+            cp -r build $out
+            runHook postInstall
+          '';
+        };
+
         gqlgen_0_17_53 = pkgs.buildGoModule rec {
           pname = "gqlgen";
           version = "0.17.53";
@@ -48,12 +88,7 @@
           pname = "traggo-server";
           version = "0.7.1";
 
-          src = pkgs.fetchFromGitHub {
-            owner = "traggo";
-            repo = "server";
-            rev = "v0.7.1";
-            sha256 = "0zc95iclvbc9v2yyjl4jmm8amg400704q98y3amzqrx9s9lrf5ag";
-          };
+          src = traggoSource;
 
           proxyVendor = true;
           vendorHash = "sha256-7zaJpL0L7b0KwkKX1ifbzwqz9QihmDg/bhx0g0d6B/M=";
@@ -63,17 +98,9 @@
           preBuild = ''
             export HOME=$TMPDIR
             
-            # Generate dummy UI files (Frontend build skipped due to legacy dependency incompatibilities)
+            # Copy the built frontend assets
             mkdir -p ui/build
-            touch ui/build/index.html
-            touch ui/build/manifest.json
-            touch ui/build/service-worker.js
-            touch ui/build/asset-manifest.json
-            touch ui/build/favicon.ico
-            touch ui/build/favicon-16x16.png
-            touch ui/build/favicon-32x32.png
-            touch ui/build/favicon-192x192.png
-            touch ui/build/favicon-256x256.png
+            cp -r ${traggoUi}/* ui/build/
 
             # Generate Go code using gqlgen from nixpkgs
             export GOCACHE=$TMPDIR/go-cache
@@ -94,6 +121,8 @@
           
           doCheck = false;
         };
+        
+        packages.ui = traggoUi;
       }
     );
 }
