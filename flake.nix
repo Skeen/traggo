@@ -14,13 +14,13 @@
       {
         packages.default = pkgs.buildGoModule {
           pname = "traggo-server";
-          version = "0.0.1";
+          version = "0.7.1";
 
           src = pkgs.fetchFromGitHub {
             owner = "traggo";
             repo = "server";
-            rev = "f57806a449ebb912cb0f96ec9b5a48b1cb03373b";
-            sha256 = "sha256-RYMxjQtUzYWTtkiF/4C4CogM582BLH7hzl7MbkYML9I=";
+            rev = "v0.7.1";
+            sha256 = "0zc95iclvbc9v2yyjl4jmm8amg400704q98y3amzqrx9s9lrf5ag";
           };
 
           proxyVendor = true;
@@ -31,6 +31,11 @@
           # Fix for go mod failing due to missing generated internal packages
           overrideModAttrs = old: {
             preBuild = ''
+              # Create dummy files for generated packages to satisfy go mod tidy
+              mkdir -p generated/gqlmodel generated/gqlschema
+              echo "package gqlmodel" > generated/gqlmodel/dummy.go
+              echo "package gqlschema" > generated/gqlschema/dummy.go
+
               # Update go.sum for the new dependency and update tools
               export GOMODCACHE=$TMPDIR/go-mod-cache
               go get golang.org/x/tools@latest github.com/99designs/gqlgen@latest
