@@ -45,7 +45,8 @@
 
           installPhase = ''
             runHook preInstall
-            cp -r build $out
+            mkdir -p $out
+            cp -R build/. $out/
             runHook postInstall
           '';
         };
