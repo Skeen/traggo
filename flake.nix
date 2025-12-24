@@ -10,6 +10,38 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        gqlgen_0_17_53 = pkgs.buildGoModule rec {
+          pname = "gqlgen";
+          version = "0.17.53";
+          src = pkgs.fetchFromGitHub {
+            owner = "99designs";
+            repo = "gqlgen";
+            rev = "v${version}";
+            sha256 = "05xirhw62n40sv33s3xsg7sf447iqi46032jyll1pdlc6dfp3f4f";
+          };
+          vendorHash = "sha256-XqfO5xpmM+tumnhUjXuvWdQLs6HWVDG+TTomcBTMGk8=";
+          
+          doCheck = false;
+
+          preBuild = ''
+            cp vendor/go.mod.saved go.mod
+            cp vendor/go.sum.saved go.sum
+          '';
+
+          overrideModAttrs = old: {
+            preBuild = ''
+              go get golang.org/x/tools@latest
+              go mod tidy
+            '';
+            installPhase = ''
+              go mod vendor
+              mkdir -p $out
+              cp -r vendor/* $out/
+              cp go.mod $out/go.mod.saved
+              cp go.sum $out/go.sum.saved
+            '';
+          };
+        };
       in
       {
         packages.default = pkgs.buildGoModule {
@@ -24,46 +56,12 @@
           };
 
           proxyVendor = true;
-          vendorHash = "sha256-tTwuxCwJmvUeaiI7Ku0E1RIsL60/ml3RHaZzbQ5YnDo=";
+          vendorHash = "sha256-7zaJpL0L7b0KwkKX1ifbzwqz9QihmDg/bhx0g0d6B/M=";
 
-          nativeBuildInputs = [ pkgs.gqlgen ];
-
-          # Fix for go mod failing due to missing generated internal packages
-          overrideModAttrs = old: {
-            preBuild = ''
-              # Create dummy files for generated packages to satisfy go mod tidy
-              mkdir -p generated/gqlmodel generated/gqlschema
-              echo "package gqlmodel" > generated/gqlmodel/dummy.go
-              echo "package gqlschema" > generated/gqlschema/dummy.go
-
-              # Update go.sum for the new dependency and update tools
-              export GOMODCACHE=$TMPDIR/go-mod-cache
-              go get golang.org/x/tools@latest github.com/99designs/gqlgen@latest
-              go mod tidy
-            '';
-            
-            installPhase = ''
-              mkdir -p $out
-              export GOMODCACHE=$TMPDIR/modcache
-              # We need to download modules based on the modified go.mod
-              go mod download
-              
-              # Copy the download cache to output (GOPROXY structure)
-              cp -r $TMPDIR/modcache/cache/download/* $out
-              
-              # Save the modified go.mod/sum
-              cp go.mod $out/go.mod.saved
-              cp go.sum $out/go.sum.saved
-            '';
-          };
+          nativeBuildInputs = [ gqlgen_0_17_53 ];
 
           preBuild = ''
             export HOME=$TMPDIR
-            
-            # Restore go.mod/sum from cached copy in goModules
-            GO_MODULES_PATH=$(echo $GOPROXY | sed 's|file://||')
-            cp $GO_MODULES_PATH/go.mod.saved go.mod
-            cp $GO_MODULES_PATH/go.sum.saved go.sum
             
             # Generate dummy UI files (Frontend build skipped due to legacy dependency incompatibilities)
             mkdir -p ui/build
