@@ -6,9 +6,13 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+  }:
+    flake-utils.lib.eachDefaultSystem (
+      system: let
         pkgs = nixpkgs.legacyPackages.${system};
 
         traggoSource = pkgs.fetchFromGitHub {
@@ -61,7 +65,7 @@
             sha256 = "05xirhw62n40sv33s3xsg7sf447iqi46032jyll1pdlc6dfp3f4f";
           };
           vendorHash = "sha256-XqfO5xpmM+tumnhUjXuvWdQLs6HWVDG+TTomcBTMGk8=";
-          
+
           doCheck = false;
 
           preBuild = ''
@@ -83,8 +87,7 @@
             '';
           };
         };
-      in
-      {
+      in {
         packages.default = pkgs.buildGoModule {
           pname = "traggo-server";
           version = "0.7.1";
@@ -94,11 +97,11 @@
           proxyVendor = true;
           vendorHash = "sha256-7zaJpL0L7b0KwkKX1ifbzwqz9QihmDg/bhx0g0d6B/M=";
 
-          nativeBuildInputs = [ gqlgen_0_17_53 ];
+          nativeBuildInputs = [gqlgen_0_17_53];
 
           preBuild = ''
             export HOME=$TMPDIR
-            
+
             # Copy the built frontend assets
             mkdir -p ui/build
             cp -r ${traggoUi}/* ui/build/
@@ -107,22 +110,23 @@
             export GOCACHE=$TMPDIR/go-cache
             # gqlgen runs go mod tidy which might fail due to missing test deps in proxy.
             gqlgen generate
-            
+
             if [ ! -f generated/gqlmodel/generated.go ]; then
                echo "gqlgen generation failed!"
                exit 1
             fi
           '';
 
-          tags = [ "netgo" "osusergo" "sqlite_omit_load_extension" ];
+          tags = ["netgo" "osusergo" "sqlite_omit_load_extension"];
           ldflags = [
-            "-s" "-w"
+            "-s"
+            "-w"
             "-X main.BuildMode=prod"
           ];
-          
+
           doCheck = false;
         };
-        
+
         packages.ui = traggoUi;
       }
     );
